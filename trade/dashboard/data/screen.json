@@ -1,0 +1,1994 @@
+{
+ "generated_at": "2026-08-20T15:07:05+00:00",
+ "as_of": "2026-08-20",
+ "provider": "synthetic",
+ "is_demo": true,
+ "universe_size": 260,
+ "regime": {
+  "benchmark_code": "1306",
+  "benchmark_close": 1088.1911707839154,
+  "benchmark_sma25": 1100.2947648327558,
+  "benchmark_sma75": 1084.054884536008,
+  "above_sma75": true,
+  "trend": "up",
+  "breadth_above_sma200": 0.7722772277227723,
+  "universe_size": 202
+ },
+ "account": {
+  "equity_yen": 3000000.0,
+  "risk_pct": 0.01,
+  "risk_yen": 30000.0,
+  "max_position_pct": 0.25
+ },
+ "trade_plan": {
+  "stop_atr_mult": 1.5,
+  "target_atr_mult": 3.0,
+  "max_hold_bars": 15,
+  "cost_pct": 0.0015,
+  "reward_risk": 2.0
+ },
+ "filters": {
+  "min_turnover_yen": 300000000,
+  "min_price": 300.0,
+  "max_price": 30000.0,
+  "min_atr_pct": 0.01,
+  "max_atr_pct": 0.12
+ },
+ "factors": [
+  {
+   "name": "trend_stack",
+   "label": "移動平均の並び",
+   "category": "trend",
+   "direction": "higher",
+   "band": null,
+   "rationale": "終値>25日>75日>200日の順に並んでいるほど上昇トレンドが明確。0〜4点。",
+   "weight": 0.0
+  },
+  {
+   "name": "sma75_slope",
+   "label": "75日線の傾き",
+   "category": "trend",
+   "direction": "higher",
+   "band": null,
+   "rationale": "中期移動平均が上向きかどうか。トレンドの持続性を測る。",
+   "weight": 0.0842
+  },
+  {
+   "name": "adx14",
+   "label": "ADX(14)",
+   "category": "trend",
+   "direction": "higher",
+   "band": null,
+   "rationale": "トレンドの強さ。方向を問わない強度指標で、値動きが方向性を持つほど高い。",
+   "weight": 0.0
+  },
+  {
+   "name": "roc60",
+   "label": "60日騰落率",
+   "category": "momentum",
+   "direction": "higher",
+   "band": null,
+   "rationale": "中期の値上がり率。順張りの基本となる素直なモメンタム。",
+   "weight": 0.0
+  },
+  {
+   "name": "resid_mom_60",
+   "label": "残差モメンタム(60日)",
+   "category": "momentum",
+   "direction": "higher",
+   "band": null,
+   "rationale": "60日騰落率からβ×TOPIX寄与を差し引いた銘柄固有の上昇分。地合いに乗っただけの上昇を除外する。",
+   "weight": 0.0
+  },
+  {
+   "name": "sector_rs_60",
+   "label": "同業種内相対強度(60日)",
+   "category": "momentum",
+   "direction": "higher",
+   "band": null,
+   "rationale": "同じ33業種の銘柄群の中央値に対する超過。業種循環の中で先導しているかを見る。",
+   "weight": 0.0
+  },
+  {
+   "name": "mom_120_20",
+   "label": "中期モメンタム(120-20日)",
+   "category": "momentum",
+   "direction": "higher",
+   "band": null,
+   "rationale": "直近20日を除いた120日モメンタム。短期反転の影響を除いた本質的な強さ。",
+   "weight": 0.1872
+  },
+  {
+   "name": "pullback_atr",
+   "label": "25日線からの押し幅(ATR)",
+   "category": "timing",
+   "direction": "band",
+   "band": [
+    0.0,
+    1.5
+   ],
+   "rationale": "上昇トレンド中の適度な押し目を狙う。伸びきった場面も崩れた場面も避ける。",
+   "weight": 0.5228
+  },
+  {
+   "name": "rsi14",
+   "label": "RSI(14)",
+   "category": "timing",
+   "direction": "band",
+   "band": [
+    40.0,
+    60.0
+   ],
+   "rationale": "過熱でも売られ過ぎでもない中庸ゾーンが、上昇再開前の待機として最も期待値が高い。",
+   "weight": 0.0
+  },
+  {
+   "name": "percent_b",
+   "label": "ボリンジャー%B",
+   "category": "timing",
+   "direction": "band",
+   "band": [
+    0.2,
+    0.6
+   ],
+   "rationale": "バンド内での位置。下限付近は崩壊リスク、上限付近は過熱。中央やや下を好む。",
+   "weight": 0.0987
+  },
+  {
+   "name": "bbw_position",
+   "label": "バンド幅の収縮度",
+   "category": "volatility",
+   "direction": "lower",
+   "band": null,
+   "rationale": "直近120日のレンジ内でバンド幅が下位にあるほどスクイズ。収縮の後には拡大が来やすい。",
+   "weight": 0.0
+  },
+  {
+   "name": "vol_ratio_short_long",
+   "label": "短期/長期ボラ比",
+   "category": "volatility",
+   "direction": "lower",
+   "band": null,
+   "rationale": "10日ボラ÷60日ボラ。エントリー直前に値動きが落ち着いている方がストップが機能しやすい。",
+   "weight": 0.0
+  },
+  {
+   "name": "obv_slope",
+   "label": "OBVの傾き",
+   "category": "volume",
+   "direction": "higher",
+   "band": null,
+   "rationale": "出来高を売買方向で符号付き累積したもの。上向きなら継続的な買い集めを示唆。",
+   "weight": 0.0
+  },
+  {
+   "name": "vol_ratio25",
+   "label": "出来高比(25日平均比)",
+   "category": "volume",
+   "direction": "higher",
+   "band": null,
+   "rationale": "平常時より出来高を伴っているか。注目度の高まりを捉える。",
+   "weight": 0.1071
+  },
+  {
+   "name": "near_52w_high",
+   "label": "52週高値までの距離",
+   "category": "structure",
+   "direction": "higher",
+   "band": null,
+   "rationale": "年初来高値圏は上値のしこりが少ない。テクニカルで最も頑健な要素のひとつ。",
+   "weight": 0.0
+  },
+  {
+   "name": "breakout_20",
+   "label": "20日高値ブレイク幅",
+   "category": "structure",
+   "direction": "higher",
+   "band": null,
+   "rationale": "直近20日の高値をどれだけ上抜けたか。短期的な需給転換を捉える。",
+   "weight": 0.0
+  }
+ ],
+ "candidates": [
+  {
+   "rank": 1,
+   "code": "2286",
+   "name": "林兼産業",
+   "sector33": "食料品",
+   "score": 1.1803706994262857,
+   "ev_r": -0.0091332163260251,
+   "ev_yen": -0.0,
+   "est_win_rate": 0.41894459307510373,
+   "bucket": 9,
+   "close": 8764.64939345581,
+   "entry_ref": 8764.64939345581,
+   "stop": 8233.943877989814,
+   "target": 9826.060424387802,
+   "stop_pct": 0.06055068396258401,
+   "target_pct": 0.12110136792516801,
+   "reward_risk": 2.0,
+   "atr14": 353.8036769773309,
+   "atr_pct": 0.04036712264172267,
+   "turnover_ma25": 1611468374.105557,
+   "shares": 0,
+   "cost_yen": 0.0,
+   "position_risk_yen": 0.0,
+   "sizing_note": "min_lot_exceeds_risk",
+   "contributions": [
+    {
+     "factor": "vol_ratio25",
+     "label": "出来高比(25日平均比)",
+     "category": "volume",
+     "z": 3.423,
+     "weight": 0.1071,
+     "contribution": 0.3666,
+     "raw": 2.3833
+    },
+    {
+     "factor": "pullback_atr",
+     "label": "25日線からの押し幅(ATR)",
+     "category": "timing",
+     "z": 0.667,
+     "weight": 0.5228,
+     "contribution": 0.3489,
+     "raw": 1.0804
+    },
+    {
+     "factor": "mom_120_20",
+     "label": "中期モメンタム(120-20日)",
+     "category": "momentum",
+     "z": 1.666,
+     "weight": 0.1872,
+     "contribution": 0.3119,
+     "raw": 0.4255
+    },
+    {
+     "factor": "sma75_slope",
+     "label": "75日線の傾き",
+     "category": "trend",
+     "z": 1.087,
+     "weight": 0.0842,
+     "contribution": 0.0915,
+     "raw": 0.0033
+    },
+    {
+     "factor": "percent_b",
+     "label": "ボリンジャー%B",
+     "category": "timing",
+     "z": 0.623,
+     "weight": 0.0987,
+     "contribution": 0.0615,
+     "raw": 0.2611
+    }
+   ]
+  },
+  {
+   "rank": 2,
+   "code": "2317",
+   "name": "システナ",
+   "sector33": "情報・通信業",
+   "score": 1.0359756614148468,
+   "ev_r": -0.0091332163260251,
+   "ev_yen": -255.15630175142874,
+   "est_win_rate": 0.41894459307510373,
+   "bucket": 9,
+   "close": 669.6557336111398,
+   "entry_ref": 669.6557336111398,
+   "stop": 638.6144233184909,
+   "target": 731.7383541964376,
+   "stop_pct": 0.04635413203327275,
+   "target_pct": 0.0927082640665455,
+   "reward_risk": 2.0,
+   "atr14": 20.694206861765934,
+   "atr_pct": 0.030902754688848504,
+   "turnover_ma25": 323913376.2295244,
+   "shares": 900,
+   "cost_yen": 602690.1602500258,
+   "position_risk_yen": 27937.179263384012,
+   "sizing_note": "risk",
+   "contributions": [
+    {
+     "factor": "mom_120_20",
+     "label": "中期モメンタム(120-20日)",
+     "category": "momentum",
+     "z": 2.3,
+     "weight": 0.1872,
+     "contribution": 0.4306,
+     "raw": 0.5452
+    },
+    {
+     "factor": "pullback_atr",
+     "label": "25日線からの押し幅(ATR)",
+     "category": "timing",
+     "z": 0.667,
+     "weight": 0.5228,
+     "contribution": 0.3489,
+     "raw": 0.6815
+    },
+    {
+     "factor": "sma75_slope",
+     "label": "75日線の傾き",
+     "category": "trend",
+     "z": 1.404,
+     "weight": 0.0842,
+     "contribution": 0.1182,
+     "raw": 0.0038
+    },
+    {
+     "factor": "vol_ratio25",
+     "label": "出来高比(25日平均比)",
+     "category": "volume",
+     "z": 0.717,
+     "weight": 0.1071,
+     "contribution": 0.0767,
+     "raw": 1.1969
+    },
+    {
+     "factor": "percent_b",
+     "label": "ボリンジャー%B",
+     "category": "timing",
+     "z": 0.623,
+     "weight": 0.0987,
+     "contribution": 0.0615,
+     "raw": 0.3611
+    }
+   ]
+  },
+  {
+   "rank": 3,
+   "code": "2393",
+   "name": "日本ケアサプライ",
+   "sector33": "サービス業",
+   "score": 1.0041741162154425,
+   "ev_r": -0.0091332163260251,
+   "ev_yen": -0.0,
+   "est_win_rate": 0.41894459307510373,
+   "bucket": 9,
+   "close": 8980.05260675725,
+   "entry_ref": 8980.05260675725,
+   "stop": 8697.023918686707,
+   "target": 9546.109982898333,
+   "stop_pct": 0.03151748664117739,
+   "target_pct": 0.06303497328235479,
+   "reward_risk": 2.0,
+   "atr14": 188.68579204702792,
+   "atr_pct": 0.02101165776078493,
+   "turnover_ma25": 2498893755.9077826,
+   "shares": 0,
+   "cost_yen": 0.0,
+   "position_risk_yen": 0.0,
+   "sizing_note": "min_lot_exceeds_risk",
+   "contributions": [
+    {
+     "factor": "mom_120_20",
+     "label": "中期モメンタム(120-20日)",
+     "category": "momentum",
+     "z": 2.165,
+     "weight": 0.1872,
+     "contribution": 0.4053,
+     "raw": 0.5193
+    },
+    {
+     "factor": "pullback_atr",
+     "label": "25日線からの押し幅(ATR)",
+     "category": "timing",
+     "z": 0.667,
+     "weight": 0.5228,
+     "contribution": 0.3489,
+     "raw": 0.5567
+    },
+    {
+     "factor": "sma75_slope",
+     "label": "75日線の傾き",
+     "category": "trend",
+     "z": 1.727,
+     "weight": 0.0842,
+     "contribution": 0.1455,
+     "raw": 0.0044
+    },
+    {
+     "factor": "percent_b",
+     "label": "ボリンジャー%B",
+     "category": "timing",
+     "z": 0.623,
+     "weight": 0.0987,
+     "contribution": 0.0615,
+     "raw": 0.3923
+    },
+    {
+     "factor": "vol_ratio25",
+     "label": "出来高比(25日平均比)",
+     "category": "volume",
+     "z": 0.401,
+     "weight": 0.1071,
+     "contribution": 0.043,
+     "raw": 1.0655
+    }
+   ]
+  },
+  {
+   "rank": 4,
+   "code": "1941",
+   "name": "中電工",
+   "sector33": "建設業",
+   "score": 0.9186455769281286,
+   "ev_r": -0.007998580977548719,
+   "ev_yen": -222.1430904158225,
+   "est_win_rate": 0.41894459307510373,
+   "bucket": 9,
+   "close": 527.9506188934557,
+   "entry_ref": 527.9506188934557,
+   "stop": 493.2346031652663,
+   "target": 597.3826503498346,
+   "stop_pct": 0.06575617962329802,
+   "target_pct": 0.13151235924659604,
+   "reward_risk": 2.0,
+   "atr14": 23.14401048545962,
+   "atr_pct": 0.04383745308219868,
+   "turnover_ma25": 8855665730.879862,
+   "shares": 800,
+   "cost_yen": 422360.4951147646,
+   "position_risk_yen": 27772.812582551545,
+   "sizing_note": "risk",
+   "contributions": [
+    {
+     "factor": "mom_120_20",
+     "label": "中期モメンタム(120-20日)",
+     "category": "momentum",
+     "z": 2.3,
+     "weight": 0.1872,
+     "contribution": 0.4306,
+     "raw": 0.9104
+    },
+    {
+     "factor": "pullback_atr",
+     "label": "25日線からの押し幅(ATR)",
+     "category": "timing",
+     "z": 0.667,
+     "weight": 0.5228,
+     "contribution": 0.3489,
+     "raw": 0.3134
+    },
+    {
+     "factor": "sma75_slope",
+     "label": "75日線の傾き",
+     "category": "trend",
+     "z": 1.85,
+     "weight": 0.0842,
+     "contribution": 0.1558,
+     "raw": 0.0083
+    },
+    {
+     "factor": "vol_ratio25",
+     "label": "出来高比(25日平均比)",
+     "category": "volume",
+     "z": -0.73,
+     "weight": 0.1071,
+     "contribution": -0.0782,
+     "raw": 0.5941
+    },
+    {
+     "factor": "percent_b",
+     "label": "ボリンジャー%B",
+     "category": "timing",
+     "z": 0.623,
+     "weight": 0.0987,
+     "contribution": 0.0615,
+     "raw": 0.3861
+    }
+   ]
+  },
+  {
+   "rank": 5,
+   "code": "1969",
+   "name": "高砂熱学工業",
+   "sector33": "建設業",
+   "score": 0.9184185553902021,
+   "ev_r": -0.00799424317066566,
+   "ev_yen": -228.44608551694148,
+   "est_win_rate": 0.41894459307510373,
+   "bucket": 9,
+   "close": 545.5770357871199,
+   "entry_ref": 545.5770357871199,
+   "stop": 513.8255643233645,
+   "target": 609.0799787146309,
+   "stop_pct": 0.05819796175611881,
+   "target_pct": 0.11639592351223763,
+   "reward_risk": 2.0,
+   "atr14": 21.16764764250365,
+   "atr_pct": 0.03879864117074588,
+   "turnover_ma25": 1260520203.4494958,
+   "shares": 900,
+   "cost_yen": 491019.3322084079,
+   "position_risk_yen": 28576.324317379924,
+   "sizing_note": "risk",
+   "contributions": [
+    {
+     "factor": "mom_120_20",
+     "label": "中期モメンタム(120-20日)",
+     "category": "momentum",
+     "z": 1.93,
+     "weight": 0.1872,
+     "contribution": 0.3614,
+     "raw": 0.4752
+    },
+    {
+     "factor": "pullback_atr",
+     "label": "25日線からの押し幅(ATR)",
+     "category": "timing",
+     "z": 0.667,
+     "weight": 0.5228,
+     "contribution": 0.3489,
+     "raw": 0.0961
+    },
+    {
+     "factor": "sma75_slope",
+     "label": "75日線の傾き",
+     "category": "trend",
+     "z": 1.85,
+     "weight": 0.0842,
+     "contribution": 0.1558,
+     "raw": 0.0056
+    },
+    {
+     "factor": "percent_b",
+     "label": "ボリンジャー%B",
+     "category": "timing",
+     "z": 0.623,
+     "weight": 0.0987,
+     "contribution": 0.0615,
+     "raw": 0.4733
+    },
+    {
+     "factor": "vol_ratio25",
+     "label": "出来高比(25日平均比)",
+     "category": "volume",
+     "z": -0.086,
+     "weight": 0.1071,
+     "contribution": -0.0092,
+     "raw": 0.8624
+    }
+   ]
+  },
+  {
+   "rank": 6,
+   "code": "2593",
+   "name": "伊藤園",
+   "sector33": "食料品",
+   "score": 0.9150900555588075,
+   "ev_r": -0.007930643965009854,
+   "ev_yen": -217.78333014769925,
+   "est_win_rate": 0.41894459307510373,
+   "bucket": 9,
+   "close": 4917.595961027007,
+   "entry_ref": 4917.595961027007,
+   "stop": 4642.986066662107,
+   "target": 5466.815749756808,
+   "stop_pct": 0.05584230517131589,
+   "target_pct": 0.11168461034263177,
+   "reward_risk": 2.0,
+   "atr14": 183.0732629099337,
+   "atr_pct": 0.03722820344754392,
+   "turnover_ma25": 3519608358.237956,
+   "shares": 100,
+   "cost_yen": 491759.59610270074,
+   "position_risk_yen": 27460.989436490057,
+   "sizing_note": "risk",
+   "contributions": [
+    {
+     "factor": "pullback_atr",
+     "label": "25日線からの押し幅(ATR)",
+     "category": "timing",
+     "z": 0.667,
+     "weight": 0.5228,
+     "contribution": 0.3489,
+     "raw": 1.4782
+    },
+    {
+     "factor": "mom_120_20",
+     "label": "中期モメンタム(120-20日)",
+     "category": "momentum",
+     "z": 1.772,
+     "weight": 0.1872,
+     "contribution": 0.3319,
+     "raw": 0.4455
+    },
+    {
+     "factor": "sma75_slope",
+     "label": "75日線の傾き",
+     "category": "trend",
+     "z": 1.343,
+     "weight": 0.0842,
+     "contribution": 0.1131,
+     "raw": 0.0037
+    },
+    {
+     "factor": "percent_b",
+     "label": "ボリンジャー%B",
+     "category": "timing",
+     "z": 0.623,
+     "weight": 0.0987,
+     "contribution": 0.0615,
+     "raw": 0.2054
+    },
+    {
+     "factor": "vol_ratio25",
+     "label": "出来高比(25日平均比)",
+     "category": "volume",
+     "z": 0.558,
+     "weight": 0.1071,
+     "contribution": 0.0598,
+     "raw": 1.1308
+    }
+   ]
+  },
+  {
+   "rank": 7,
+   "code": "1879",
+   "name": "新日本建設",
+   "sector33": "建設業",
+   "score": 0.8928763657705912,
+   "ev_r": -0.007506196587278403,
+   "ev_yen": -221.84799499944626,
+   "est_win_rate": 0.41894459307510373,
+   "bucket": 9,
+   "close": 810.5919117895642,
+   "entry_ref": 810.5919117895642,
+   "stop": 751.4812843446509,
+   "target": 928.8131666793905,
+   "stop_pct": 0.07292279454702821,
+   "target_pct": 0.14584558909405643,
+   "reward_risk": 2.0,
+   "atr14": 39.407084963275466,
+   "atr_pct": 0.04861519636468547,
+   "turnover_ma25": 916477819.5179851,
+   "shares": 500,
+   "cost_yen": 405295.9558947821,
+   "position_risk_yen": 29555.313722456598,
+   "sizing_note": "risk",
+   "contributions": [
+    {
+     "factor": "mom_120_20",
+     "label": "中期モメンタム(120-20日)",
+     "category": "momentum",
+     "z": 2.3,
+     "weight": 0.1872,
+     "contribution": 0.4306,
+     "raw": 0.6346
+    },
+    {
+     "factor": "pullback_atr",
+     "label": "25日線からの押し幅(ATR)",
+     "category": "timing",
+     "z": 0.607,
+     "weight": 0.5228,
+     "contribution": 0.3173,
+     "raw": -0.037
+    },
+    {
+     "factor": "sma75_slope",
+     "label": "75日線の傾き",
+     "category": "trend",
+     "z": 1.85,
+     "weight": 0.0842,
+     "contribution": 0.1558,
+     "raw": 0.0048
+    },
+    {
+     "factor": "vol_ratio25",
+     "label": "出来高比(25日平均比)",
+     "category": "volume",
+     "z": -0.676,
+     "weight": 0.1071,
+     "contribution": -0.0724,
+     "raw": 0.6167
+    },
+    {
+     "factor": "percent_b",
+     "label": "ボリンジャー%B",
+     "category": "timing",
+     "z": 0.623,
+     "weight": 0.0987,
+     "contribution": 0.0615,
+     "raw": 0.517
+    }
+   ]
+  },
+  {
+   "rank": 8,
+   "code": "2378",
+   "name": "ルネサンス",
+   "sector33": "サービス業",
+   "score": 0.8837864208871139,
+   "ev_r": -0.0073325107518184135,
+   "ev_yen": -195.6916720280549,
+   "est_win_rate": 0.41894459307510373,
+   "bucket": 9,
+   "close": 1392.9126905301705,
+   "entry_ref": 1392.9126905301705,
+   "stop": 1326.1921364622733,
+   "target": 1526.3537986659646,
+   "stop_pct": 0.04790002598260622,
+   "target_pct": 0.09580005196521243,
+   "reward_risk": 2.0,
+   "atr14": 44.48036937859807,
+   "atr_pct": 0.031933350655070816,
+   "turnover_ma25": 954393355.8697379,
+   "shares": 400,
+   "cost_yen": 557165.0762120682,
+   "position_risk_yen": 26688.22162715884,
+   "sizing_note": "risk",
+   "contributions": [
+    {
+     "factor": "pullback_atr",
+     "label": "25日線からの押し幅(ATR)",
+     "category": "timing",
+     "z": 0.667,
+     "weight": 0.5228,
+     "contribution": 0.3489,
+     "raw": 1.1083
+    },
+    {
+     "factor": "mom_120_20",
+     "label": "中期モメンタム(120-20日)",
+     "category": "momentum",
+     "z": 1.463,
+     "weight": 0.1872,
+     "contribution": 0.2738,
+     "raw": 0.3873
+    },
+    {
+     "factor": "sma75_slope",
+     "label": "75日線の傾き",
+     "category": "trend",
+     "z": 1.634,
+     "weight": 0.0842,
+     "contribution": 0.1376,
+     "raw": 0.0042
+    },
+    {
+     "factor": "vol_ratio25",
+     "label": "出来高比(25日平均比)",
+     "category": "volume",
+     "z": 0.578,
+     "weight": 0.1071,
+     "contribution": 0.0619,
+     "raw": 1.1392
+    },
+    {
+     "factor": "percent_b",
+     "label": "ボリンジャー%B",
+     "category": "timing",
+     "z": 0.623,
+     "weight": 0.0987,
+     "contribution": 0.0615,
+     "raw": 0.2517
+    }
+   ]
+  },
+  {
+   "rank": 9,
+   "code": "2351",
+   "name": "ＡＳＪ",
+   "sector33": "情報・通信業",
+   "score": 0.850730727312399,
+   "ev_r": -0.006700900128340415,
+   "ev_yen": -189.1319546141805,
+   "est_win_rate": 0.41894459307510373,
+   "bucket": 9,
+   "close": 475.9479479444859,
+   "entry_ref": 475.9479479444859,
+   "stop": 454.2365187114678,
+   "target": 519.3708064105222,
+   "stop_pct": 0.0456172346719531,
+   "target_pct": 0.0912344693439062,
+   "reward_risk": 2.0,
+   "atr14": 14.474286155345421,
+   "atr_pct": 0.030411489781302065,
+   "turnover_ma25": 346182622.22905886,
+   "shares": 1300,
+   "cost_yen": 618732.3323278317,
+   "position_risk_yen": 28224.858002923567,
+   "sizing_note": "risk",
+   "contributions": [
+    {
+     "factor": "pullback_atr",
+     "label": "25日線からの押し幅(ATR)",
+     "category": "timing",
+     "z": 0.667,
+     "weight": 0.5228,
+     "contribution": 0.3489,
+     "raw": 0.8899
+    },
+    {
+     "factor": "mom_120_20",
+     "label": "中期モメンタム(120-20日)",
+     "category": "momentum",
+     "z": 1.249,
+     "weight": 0.1872,
+     "contribution": 0.2339,
+     "raw": 0.3471
+    },
+    {
+     "factor": "vol_ratio25",
+     "label": "出来高比(25日平均比)",
+     "category": "volume",
+     "z": 0.998,
+     "weight": 0.1071,
+     "contribution": 0.1069,
+     "raw": 1.3142
+    },
+    {
+     "factor": "sma75_slope",
+     "label": "75日線の傾き",
+     "category": "trend",
+     "z": 1.182,
+     "weight": 0.0842,
+     "contribution": 0.0996,
+     "raw": 0.0035
+    },
+    {
+     "factor": "percent_b",
+     "label": "ボリンジャー%B",
+     "category": "timing",
+     "z": 0.623,
+     "weight": 0.0987,
+     "contribution": 0.0615,
+     "raw": 0.3217
+    }
+   ]
+  },
+  {
+   "rank": 10,
+   "code": "1967",
+   "name": "ヤマト",
+   "sector33": "建設業",
+   "score": 0.8224284065780575,
+   "ev_r": -0.006160114426643158,
+   "ev_yen": -167.49444254921244,
+   "est_win_rate": 0.41894459307510373,
+   "bucket": 9,
+   "close": 989.7757819221836,
+   "entry_ref": 989.7757819221836,
+   "stop": 944.4588632881236,
+   "target": 1080.4096191903036,
+   "stop_pct": 0.045785034814706006,
+   "target_pct": 0.09157006962941201,
+   "reward_risk": 2.0,
+   "atr14": 30.21127908937336,
+   "atr_pct": 0.030523356543137342,
+   "turnover_ma25": 6927253392.420361,
+   "shares": 600,
+   "cost_yen": 593865.4691533102,
+   "position_risk_yen": 27190.151180436023,
+   "sizing_note": "risk",
+   "contributions": [
+    {
+     "factor": "pullback_atr",
+     "label": "25日線からの押し幅(ATR)",
+     "category": "timing",
+     "z": 0.667,
+     "weight": 0.5228,
+     "contribution": 0.3489,
+     "raw": 1.1807
+    },
+    {
+     "factor": "mom_120_20",
+     "label": "中期モメンタム(120-20日)",
+     "category": "momentum",
+     "z": 1.226,
+     "weight": 0.1872,
+     "contribution": 0.2295,
+     "raw": 0.3428
+    },
+    {
+     "factor": "vol_ratio25",
+     "label": "出来高比(25日平均比)",
+     "category": "volume",
+     "z": 1.11,
+     "weight": 0.1071,
+     "contribution": 0.1189,
+     "raw": 1.3608
+    },
+    {
+     "factor": "sma75_slope",
+     "label": "75日線の傾き",
+     "category": "trend",
+     "z": 0.756,
+     "weight": 0.0842,
+     "contribution": 0.0636,
+     "raw": 0.0027
+    },
+    {
+     "factor": "percent_b",
+     "label": "ボリンジャー%B",
+     "category": "timing",
+     "z": 0.623,
+     "weight": 0.0987,
+     "contribution": 0.0615,
+     "raw": 0.2748
+    }
+   ]
+  },
+  {
+   "rank": 11,
+   "code": "1417",
+   "name": "ミライト・ワン",
+   "sector33": "建設業",
+   "score": 0.8020099178610609,
+   "ev_r": -0.005769968796817815,
+   "ev_yen": -161.6166862634497,
+   "est_win_rate": 0.41894459307510373,
+   "bucket": 9,
+   "close": 3829.630780903881,
+   "entry_ref": 3829.630780903881,
+   "stop": 3549.531023080957,
+   "target": 4389.830296549729,
+   "stop_pct": 0.0731401468829885,
+   "target_pct": 0.146280293765977,
+   "reward_risk": 2.0,
+   "atr14": 186.7331718819492,
+   "atr_pct": 0.04876009792199234,
+   "turnover_ma25": 1969666198.592842,
+   "shares": 100,
+   "cost_yen": 382963.0780903881,
+   "position_risk_yen": 28009.975782292382,
+   "sizing_note": "risk",
+   "contributions": [
+    {
+     "factor": "mom_120_20",
+     "label": "中期モメンタム(120-20日)",
+     "category": "momentum",
+     "z": 2.3,
+     "weight": 0.1872,
+     "contribution": 0.4306,
+     "raw": 0.5869
+    },
+    {
+     "factor": "pullback_atr",
+     "label": "25日線からの押し幅(ATR)",
+     "category": "timing",
+     "z": 0.359,
+     "weight": 0.5228,
+     "contribution": 0.1878,
+     "raw": -0.1887
+    },
+    {
+     "factor": "sma75_slope",
+     "label": "75日線の傾き",
+     "category": "trend",
+     "z": 1.764,
+     "weight": 0.0842,
+     "contribution": 0.1485,
+     "raw": 0.0045
+    },
+    {
+     "factor": "percent_b",
+     "label": "ボリンジャー%B",
+     "category": "timing",
+     "z": 0.623,
+     "weight": 0.0987,
+     "contribution": 0.0615,
+     "raw": 0.5591
+    },
+    {
+     "factor": "vol_ratio25",
+     "label": "出来高比(25日平均比)",
+     "category": "volume",
+     "z": -0.247,
+     "weight": 0.1071,
+     "contribution": -0.0264,
+     "raw": 0.7955
+    }
+   ]
+  },
+  {
+   "rank": 12,
+   "code": "2498",
+   "name": "オリエンタルコンサルタンツホールディングス",
+   "sector33": "サービス業",
+   "score": 0.7985588801594216,
+   "ev_r": -0.005704028202667166,
+   "ev_yen": -131.2219349806269,
+   "est_win_rate": 0.41894459307510373,
+   "bucket": 9,
+   "close": 2249.0183834605705,
+   "entry_ref": 2249.0183834605705,
+   "stop": 2133.992711848999,
+   "target": 2479.0697266837133,
+   "stop_pct": 0.05114483387840565,
+   "target_pct": 0.1022896677568113,
+   "reward_risk": 2.0,
+   "atr14": 76.68378107438086,
+   "atr_pct": 0.0340965559189371,
+   "turnover_ma25": 542194871.3779188,
+   "shares": 200,
+   "cost_yen": 449803.6766921141,
+   "position_risk_yen": 23005.134322314258,
+   "sizing_note": "risk",
+   "contributions": [
+    {
+     "factor": "mom_120_20",
+     "label": "中期モメンタム(120-20日)",
+     "category": "momentum",
+     "z": 1.98,
+     "weight": 0.1872,
+     "contribution": 0.3708,
+     "raw": 0.4846
+    },
+    {
+     "factor": "pullback_atr",
+     "label": "25日線からの押し幅(ATR)",
+     "category": "timing",
+     "z": 0.667,
+     "weight": 0.5228,
+     "contribution": 0.3489,
+     "raw": 1.1907
+    },
+    {
+     "factor": "sma75_slope",
+     "label": "75日線の傾き",
+     "category": "trend",
+     "z": 1.283,
+     "weight": 0.0842,
+     "contribution": 0.108,
+     "raw": 0.0036
+    },
+    {
+     "factor": "vol_ratio25",
+     "label": "出来高比(25日平均比)",
+     "category": "volume",
+     "z": -0.846,
+     "weight": 0.1071,
+     "contribution": -0.0906,
+     "raw": 0.5457
+    },
+    {
+     "factor": "percent_b",
+     "label": "ボリンジャー%B",
+     "category": "timing",
+     "z": 0.623,
+     "weight": 0.0987,
+     "contribution": 0.0615,
+     "raw": 0.2185
+    }
+   ]
+  },
+  {
+   "rank": 13,
+   "code": "1381",
+   "name": "アクシーズ",
+   "sector33": "水産・農林業",
+   "score": 0.794732757622124,
+   "ev_r": -0.005630920686837147,
+   "ev_yen": -160.71861527797967,
+   "est_win_rate": 0.41894459307510373,
+   "bucket": 9,
+   "close": 2202.294579048713,
+   "entry_ref": 2202.294579048713,
+   "stop": 2107.1540598711676,
+   "target": 2392.5756174038033,
+   "stop_pct": 0.04320063268676864,
+   "target_pct": 0.08640126537353728,
+   "reward_risk": 2.0,
+   "atr14": 63.427012785030136,
+   "atr_pct": 0.02880042179117909,
+   "turnover_ma25": 1980444137.3053393,
+   "shares": 300,
+   "cost_yen": 660688.3737146138,
+   "position_risk_yen": 28542.15575326356,
+   "sizing_note": "risk",
+   "contributions": [
+    {
+     "factor": "pullback_atr",
+     "label": "25日線からの押し幅(ATR)",
+     "category": "timing",
+     "z": 0.667,
+     "weight": 0.5228,
+     "contribution": 0.3489,
+     "raw": 0.1763
+    },
+    {
+     "factor": "sma75_slope",
+     "label": "75日線の傾き",
+     "category": "trend",
+     "z": 1.85,
+     "weight": 0.0842,
+     "contribution": 0.1558,
+     "raw": 0.0046
+    },
+    {
+     "factor": "mom_120_20",
+     "label": "中期モメンタム(120-20日)",
+     "category": "momentum",
+     "z": 0.758,
+     "weight": 0.1872,
+     "contribution": 0.142,
+     "raw": 0.2549
+    },
+    {
+     "factor": "vol_ratio25",
+     "label": "出来高比(25日平均比)",
+     "category": "volume",
+     "z": 0.808,
+     "weight": 0.1071,
+     "contribution": 0.0866,
+     "raw": 1.2351
+    },
+    {
+     "factor": "percent_b",
+     "label": "ボリンジャー%B",
+     "category": "timing",
+     "z": 0.623,
+     "weight": 0.0987,
+     "contribution": 0.0615,
+     "raw": 0.456
+    }
+   ]
+  },
+  {
+   "rank": 14,
+   "code": "1950",
+   "name": "日本電設工業",
+   "sector33": "建設業",
+   "score": 0.7857435753496689,
+   "ev_r": -0.00545916016979249,
+   "ev_yen": -153.7401055233772,
+   "est_win_rate": 0.41894459307510373,
+   "bucket": 9,
+   "close": 788.8559720973609,
+   "entry_ref": 788.8559720973609,
+   "stop": 741.9195384269474,
+   "target": 882.728839438188,
+   "stop_pct": 0.059499370392825796,
+   "target_pct": 0.11899874078565159,
+   "reward_risk": 2.0,
+   "atr14": 31.290955780275684,
+   "atr_pct": 0.03966624692855053,
+   "turnover_ma25": 1670175140.4367807,
+   "shares": 600,
+   "cost_yen": 473313.58325841656,
+   "position_risk_yen": 28161.860202248117,
+   "sizing_note": "risk",
+   "contributions": [
+    {
+     "factor": "pullback_atr",
+     "label": "25日線からの押し幅(ATR)",
+     "category": "timing",
+     "z": 0.667,
+     "weight": 0.5228,
+     "contribution": 0.3489,
+     "raw": 0.1375
+    },
+    {
+     "factor": "mom_120_20",
+     "label": "中期モメンタム(120-20日)",
+     "category": "momentum",
+     "z": 1.805,
+     "weight": 0.1872,
+     "contribution": 0.3379,
+     "raw": 0.4516
+    },
+    {
+     "factor": "sma75_slope",
+     "label": "75日線の傾き",
+     "category": "trend",
+     "z": 1.483,
+     "weight": 0.0842,
+     "contribution": 0.1249,
+     "raw": 0.004
+    },
+    {
+     "factor": "vol_ratio25",
+     "label": "出来高比(25日平均比)",
+     "category": "volume",
+     "z": -0.817,
+     "weight": 0.1071,
+     "contribution": -0.0875,
+     "raw": 0.5578
+    },
+    {
+     "factor": "percent_b",
+     "label": "ボリンジャー%B",
+     "category": "timing",
+     "z": 0.623,
+     "weight": 0.0987,
+     "contribution": 0.0615,
+     "raw": 0.4496
+    }
+   ]
+  },
+  {
+   "rank": 15,
+   "code": "2607",
+   "name": "不二製油",
+   "sector33": "食料品",
+   "score": 0.7751640242461936,
+   "ev_r": -0.005257011730417595,
+   "ev_yen": -118.85411898101961,
+   "est_win_rate": 0.41894459307510373,
+   "bucket": 9,
+   "close": 2143.2495048868864,
+   "entry_ref": 2143.2495048868864,
+   "stop": 2030.2060830001537,
+   "target": 2369.3363486603516,
+   "stop_pct": 0.05274393934489611,
+   "target_pct": 0.10548787868979222,
+   "reward_risk": 2.0,
+   "atr14": 75.36228125782169,
+   "atr_pct": 0.03516262622993074,
+   "turnover_ma25": 6706461069.992368,
+   "shares": 200,
+   "cost_yen": 428649.90097737726,
+   "position_risk_yen": 22608.684377346508,
+   "sizing_note": "risk",
+   "contributions": [
+    {
+     "factor": "pullback_atr",
+     "label": "25日線からの押し幅(ATR)",
+     "category": "timing",
+     "z": 0.624,
+     "weight": 0.5228,
+     "contribution": 0.3261,
+     "raw": 1.5267
+    },
+    {
+     "factor": "mom_120_20",
+     "label": "中期モメンタム(120-20日)",
+     "category": "momentum",
+     "z": 1.645,
+     "weight": 0.1872,
+     "contribution": 0.308,
+     "raw": 0.4215
+    },
+    {
+     "factor": "vol_ratio25",
+     "label": "出来高比(25日平均比)",
+     "category": "volume",
+     "z": 0.681,
+     "weight": 0.1071,
+     "contribution": 0.0729,
+     "raw": 1.182
+    },
+    {
+     "factor": "sma75_slope",
+     "label": "75日線の傾き",
+     "category": "trend",
+     "z": 0.525,
+     "weight": 0.0842,
+     "contribution": 0.0442,
+     "raw": 0.0023
+    },
+    {
+     "factor": "percent_b",
+     "label": "ボリンジャー%B",
+     "category": "timing",
+     "z": 0.243,
+     "weight": 0.0987,
+     "contribution": 0.024,
+     "raw": 0.1566
+    }
+   ]
+  },
+  {
+   "rank": 16,
+   "code": "1723",
+   "name": "日本電技",
+   "sector33": "建設業",
+   "score": 0.6894316144065158,
+   "ev_r": -0.0036188824106162267,
+   "ev_yen": -60.87629702493882,
+   "est_win_rate": 0.4188282734287154,
+   "bucket": 8,
+   "close": 2952.3146063339063,
+   "entry_ref": 2952.3146063339063,
+   "stop": 2784.0961064833605,
+   "target": 3288.7516060349976,
+   "stop_pct": 0.056978514244264186,
+   "target_pct": 0.11395702848852837,
+   "reward_risk": 2.0,
+   "atr14": 112.14566656703046,
+   "atr_pct": 0.03798567616284279,
+   "turnover_ma25": 663878763.829065,
+   "shares": 100,
+   "cost_yen": 295231.46063339064,
+   "position_risk_yen": 16821.84998505457,
+   "sizing_note": "risk",
+   "contributions": [
+    {
+     "factor": "pullback_atr",
+     "label": "25日線からの押し幅(ATR)",
+     "category": "timing",
+     "z": 0.667,
+     "weight": 0.5228,
+     "contribution": 0.3489,
+     "raw": 0.1417
+    },
+    {
+     "factor": "vol_ratio25",
+     "label": "出来高比(25日平均比)",
+     "category": "volume",
+     "z": 0.966,
+     "weight": 0.1071,
+     "contribution": 0.1034,
+     "raw": 1.3007
+    },
+    {
+     "factor": "mom_120_20",
+     "label": "中期モメンタム(120-20日)",
+     "category": "momentum",
+     "z": 0.481,
+     "weight": 0.1872,
+     "contribution": 0.09,
+     "raw": 0.2028
+    },
+    {
+     "factor": "sma75_slope",
+     "label": "75日線の傾き",
+     "category": "trend",
+     "z": 1.016,
+     "weight": 0.0842,
+     "contribution": 0.0856,
+     "raw": 0.0032
+    },
+    {
+     "factor": "percent_b",
+     "label": "ボリンジャー%B",
+     "category": "timing",
+     "z": 0.623,
+     "weight": 0.0987,
+     "contribution": 0.0615,
+     "raw": 0.4588
+    }
+   ]
+  },
+  {
+   "rank": 17,
+   "code": "2483",
+   "name": "翻訳センター",
+   "sector33": "サービス業",
+   "score": 0.6864690814874455,
+   "ev_r": -0.0035622759062069707,
+   "ev_yen": -101.15922741010979,
+   "est_win_rate": 0.4188282734287154,
+   "bucket": 8,
+   "close": 792.54800960465,
+   "entry_ref": 792.54800960465,
+   "stop": 745.2190781043096,
+   "target": 887.205872605331,
+   "stop_pct": 0.059717431533201075,
+   "target_pct": 0.11943486306640215,
+   "reward_risk": 2.0,
+   "atr14": 31.55262100022698,
+   "atr_pct": 0.03981162102213405,
+   "turnover_ma25": 1265039358.0616431,
+   "shares": 600,
+   "cost_yen": 475528.80576279,
+   "position_risk_yen": 28397.358900204283,
+   "sizing_note": "risk",
+   "contributions": [
+    {
+     "factor": "pullback_atr",
+     "label": "25日線からの押し幅(ATR)",
+     "category": "timing",
+     "z": 0.667,
+     "weight": 0.5228,
+     "contribution": 0.3489,
+     "raw": 1.063
+    },
+    {
+     "factor": "mom_120_20",
+     "label": "中期モメンタム(120-20日)",
+     "category": "momentum",
+     "z": 1.737,
+     "weight": 0.1872,
+     "contribution": 0.3253,
+     "raw": 0.4389
+    },
+    {
+     "factor": "vol_ratio25",
+     "label": "出来高比(25日平均比)",
+     "category": "volume",
+     "z": -0.681,
+     "weight": 0.1071,
+     "contribution": -0.073,
+     "raw": 0.6144
+    },
+    {
+     "factor": "percent_b",
+     "label": "ボリンジャー%B",
+     "category": "timing",
+     "z": 0.623,
+     "weight": 0.0987,
+     "contribution": 0.0615,
+     "raw": 0.2922
+    },
+    {
+     "factor": "sma75_slope",
+     "label": "75日線の傾き",
+     "category": "trend",
+     "z": 0.282,
+     "weight": 0.0842,
+     "contribution": 0.0238,
+     "raw": 0.0019
+    }
+   ]
+  },
+  {
+   "rank": 18,
+   "code": "2296",
+   "name": "伊藤ハム米久ホールディングス",
+   "sector33": "食料品",
+   "score": 0.6736268306215445,
+   "ev_r": -0.003316893002413444,
+   "ev_yen": -0.0,
+   "est_win_rate": 0.4188282734287154,
+   "bucket": 8,
+   "close": 19038.0788133014,
+   "entry_ref": 19038.0788133014,
+   "stop": 18309.58702186703,
+   "target": 20495.06239617014,
+   "stop_pct": 0.038264984538533976,
+   "target_pct": 0.07652996907706795,
+   "reward_risk": 2.0,
+   "atr14": 485.66119428957956,
+   "atr_pct": 0.025509989692355985,
+   "turnover_ma25": 467287828.07368,
+   "shares": 0,
+   "cost_yen": 0.0,
+   "position_risk_yen": 0.0,
+   "sizing_note": "min_lot_exceeds_risk",
+   "contributions": [
+    {
+     "factor": "pullback_atr",
+     "label": "25日線からの押し幅(ATR)",
+     "category": "timing",
+     "z": 0.667,
+     "weight": 0.5228,
+     "contribution": 0.3489,
+     "raw": 0.3507
+    },
+    {
+     "factor": "mom_120_20",
+     "label": "中期モメンタム(120-20日)",
+     "category": "momentum",
+     "z": 0.945,
+     "weight": 0.1872,
+     "contribution": 0.177,
+     "raw": 0.2901
+    },
+    {
+     "factor": "sma75_slope",
+     "label": "75日線の傾き",
+     "category": "trend",
+     "z": 0.879,
+     "weight": 0.0842,
+     "contribution": 0.074,
+     "raw": 0.0029
+    },
+    {
+     "factor": "percent_b",
+     "label": "ボリンジャー%B",
+     "category": "timing",
+     "z": 0.623,
+     "weight": 0.0987,
+     "contribution": 0.0615,
+     "raw": 0.4065
+    },
+    {
+     "factor": "vol_ratio25",
+     "label": "出来高比(25日平均比)",
+     "category": "volume",
+     "z": 0.114,
+     "weight": 0.1071,
+     "contribution": 0.0122,
+     "raw": 0.9458
+    }
+   ]
+  },
+  {
+   "rank": 19,
+   "code": "2395",
+   "name": "新日本科学",
+   "sector33": "サービス業",
+   "score": 0.6736083421194826,
+   "ev_r": -0.0033165397339428226,
+   "ev_yen": -58.62627309136201,
+   "est_win_rate": 0.4188282734287154,
+   "bucket": 8,
+   "close": 2946.5381688347697,
+   "entry_ref": 2946.5381688347697,
+   "stop": 2769.7687712263023,
+   "target": 3300.076964051705,
+   "stop_pct": 0.05999223070589727,
+   "target_pct": 0.11998446141179454,
+   "reward_risk": 2.0,
+   "atr14": 117.84626507231172,
+   "atr_pct": 0.03999482047059818,
+   "turnover_ma25": 4840888583.710631,
+   "shares": 100,
+   "cost_yen": 294653.816883477,
+   "position_risk_yen": 17676.93976084676,
+   "sizing_note": "risk",
+   "contributions": [
+    {
+     "factor": "pullback_atr",
+     "label": "25日線からの押し幅(ATR)",
+     "category": "timing",
+     "z": 0.667,
+     "weight": 0.5228,
+     "contribution": 0.3489,
+     "raw": 0.539
+    },
+    {
+     "factor": "mom_120_20",
+     "label": "中期モメンタム(120-20日)",
+     "category": "momentum",
+     "z": 1.561,
+     "weight": 0.1872,
+     "contribution": 0.2922,
+     "raw": 0.4057
+    },
+    {
+     "factor": "vol_ratio25",
+     "label": "出来高比(25日平均比)",
+     "category": "volume",
+     "z": -0.996,
+     "weight": 0.1071,
+     "contribution": -0.1067,
+     "raw": 0.4833
+    },
+    {
+     "factor": "sma75_slope",
+     "label": "75日線の傾き",
+     "category": "trend",
+     "z": 0.923,
+     "weight": 0.0842,
+     "contribution": 0.0777,
+     "raw": 0.003
+    },
+    {
+     "factor": "percent_b",
+     "label": "ボリンジャー%B",
+     "category": "timing",
+     "z": 0.623,
+     "weight": 0.0987,
+     "contribution": 0.0615,
+     "raw": 0.3584
+    }
+   ]
+  },
+  {
+   "rank": 20,
+   "code": "1780",
+   "name": "ヤマウラ",
+   "sector33": "建設業",
+   "score": 0.6451163042044104,
+   "ev_r": -0.0032773872373000074,
+   "ev_yen": -88.69480719182204,
+   "est_win_rate": 0.4188282734287154,
+   "bucket": 8,
+   "close": 758.0771322096474,
+   "entry_ref": 758.0771322096474,
+   "stop": 719.4161934060677,
+   "target": 835.3990098168067,
+   "stop_pct": 0.05099868754897084,
+   "target_pct": 0.10199737509794168,
+   "reward_risk": 2.0,
+   "atr14": 25.773959202386443,
+   "atr_pct": 0.03399912503264722,
+   "turnover_ma25": 931940301.9305696,
+   "shares": 700,
+   "cost_yen": 530653.9925467531,
+   "position_risk_yen": 27062.65716250577,
+   "sizing_note": "risk",
+   "contributions": [
+    {
+     "factor": "mom_120_20",
+     "label": "中期モメンタム(120-20日)",
+     "category": "momentum",
+     "z": 1.585,
+     "weight": 0.1872,
+     "contribution": 0.2968,
+     "raw": 0.4104
+    },
+    {
+     "factor": "pullback_atr",
+     "label": "25日線からの押し幅(ATR)",
+     "category": "timing",
+     "z": 0.488,
+     "weight": 0.5228,
+     "contribution": 0.2552,
+     "raw": -0.1098
+    },
+    {
+     "factor": "sma75_slope",
+     "label": "75日線の傾き",
+     "category": "trend",
+     "z": 0.753,
+     "weight": 0.0842,
+     "contribution": 0.0634,
+     "raw": 0.0027
+    },
+    {
+     "factor": "percent_b",
+     "label": "ボリンジャー%B",
+     "category": "timing",
+     "z": 0.623,
+     "weight": 0.0987,
+     "contribution": 0.0615,
+     "raw": 0.5239
+    },
+    {
+     "factor": "vol_ratio25",
+     "label": "出来高比(25日平均比)",
+     "category": "volume",
+     "z": -0.297,
+     "weight": 0.1071,
+     "contribution": -0.0318,
+     "raw": 0.7746
+    }
+   ]
+  },
+  {
+   "rank": 21,
+   "code": "1724",
+   "name": "シンクレイヤ",
+   "sector33": "建設業",
+   "score": 0.6357378782521659,
+   "ev_r": -0.003636306772141445,
+   "ev_yen": -84.77120384608607,
+   "est_win_rate": 0.4188282734287154,
+   "bucket": 8,
+   "close": 641.5864747624197,
+   "entry_ref": 641.5864747624197,
+   "stop": 620.3933423898765,
+   "target": 683.9727395075063,
+   "stop_pct": 0.03303238644547659,
+   "target_pct": 0.06606477289095318,
+   "reward_risk": 2.0,
+   "atr14": 14.128754915028841,
+   "atr_pct": 0.022021590963651062,
+   "turnover_ma25": 1092401862.5021002,
+   "shares": 1100,
+   "cost_yen": 705745.1222386616,
+   "position_risk_yen": 23312.445609797585,
+   "sizing_note": "position_cap",
+   "contributions": [
+    {
+     "factor": "pullback_atr",
+     "label": "25日線からの押し幅(ATR)",
+     "category": "timing",
+     "z": 0.667,
+     "weight": 0.5228,
+     "contribution": 0.3489,
+     "raw": 0.6861
+    },
+    {
+     "factor": "vol_ratio25",
+     "label": "出来高比(25日平均比)",
+     "category": "volume",
+     "z": 2.563,
+     "weight": 0.1071,
+     "contribution": 0.2745,
+     "raw": 1.9661
+    },
+    {
+     "factor": "percent_b",
+     "label": "ボリンジャー%B",
+     "category": "timing",
+     "z": 0.623,
+     "weight": 0.0987,
+     "contribution": 0.0615,
+     "raw": 0.3456
+    },
+    {
+     "factor": "mom_120_20",
+     "label": "中期モメンタム(120-20日)",
+     "category": "momentum",
+     "z": -0.292,
+     "weight": 0.1872,
+     "contribution": -0.0547,
+     "raw": 0.0575
+    },
+    {
+     "factor": "sma75_slope",
+     "label": "75日線の傾き",
+     "category": "trend",
+     "z": 0.066,
+     "weight": 0.0842,
+     "contribution": 0.0056,
+     "raw": 0.0015
+    }
+   ]
+  },
+  {
+   "rank": 22,
+   "code": "2198",
+   "name": "アイ・ケイ・ケイホールディングス",
+   "sector33": "サービス業",
+   "score": 0.6173630305561756,
+   "ev_r": -0.0043395262485663505,
+   "ev_yen": -104.04556335706688,
+   "est_win_rate": 0.4188282734287154,
+   "bucket": 8,
+   "close": 1251.3993961954598,
+   "entry_ref": 1251.3993961954598,
+   "stop": 1131.5181494908911,
+   "target": 1491.1618896045973,
+   "stop_pct": 0.09579775015797126,
+   "target_pct": 0.19159550031594252,
+   "reward_risk": 2.0,
+   "atr14": 79.92083113637916,
+   "atr_pct": 0.06386516677198084,
+   "turnover_ma25": 8916693604.120144,
+   "shares": 200,
+   "cost_yen": 250279.87923909194,
+   "position_risk_yen": 23976.24934091375,
+   "sizing_note": "risk",
+   "contributions": [
+    {
+     "factor": "pullback_atr",
+     "label": "25日線からの押し幅(ATR)",
+     "category": "timing",
+     "z": 0.667,
+     "weight": 0.5228,
+     "contribution": 0.3489,
+     "raw": 0.9375
+    },
+    {
+     "factor": "mom_120_20",
+     "label": "中期モメンタム(120-20日)",
+     "category": "momentum",
+     "z": 1.507,
+     "weight": 0.1872,
+     "contribution": 0.2822,
+     "raw": 0.3957
+    },
+    {
+     "factor": "vol_ratio25",
+     "label": "出来高比(25日平均比)",
+     "category": "volume",
+     "z": -0.719,
+     "weight": 0.1071,
+     "contribution": -0.077,
+     "raw": 0.5987
+    },
+    {
+     "factor": "sma75_slope",
+     "label": "75日線の傾き",
+     "category": "trend",
+     "z": 0.562,
+     "weight": 0.0842,
+     "contribution": 0.0473,
+     "raw": 0.0024
+    },
+    {
+     "factor": "percent_b",
+     "label": "ボリンジャー%B",
+     "category": "timing",
+     "z": 0.161,
+     "weight": 0.0987,
+     "contribution": 0.0159,
+     "raw": 0.1473
+    }
+   ]
+  },
+  {
+   "rank": 23,
+   "code": "148A",
+   "name": "ハッチ・ワーク",
+   "sector33": "情報・通信業",
+   "score": 0.6035296794880493,
+   "ev_r": -0.00486893917520805,
+   "ev_yen": -145.0362767385198,
+   "est_win_rate": 0.4188282734287154,
+   "bucket": 8,
+   "close": 971.644517579706,
+   "entry_ref": 971.644517579706,
+   "stop": 929.0901389770661,
+   "target": 1056.7532747849857,
+   "stop_pct": 0.043796242177787006,
+   "target_pct": 0.08759248435557401,
+   "reward_risk": 2.0,
+   "atr14": 28.36958573509322,
+   "atr_pct": 0.02919749478519134,
+   "turnover_ma25": 634836979.2842592,
+   "shares": 700,
+   "cost_yen": 680151.1623057942,
+   "position_risk_yen": 29788.06502184788,
+   "sizing_note": "risk",
+   "contributions": [
+    {
+     "factor": "pullback_atr",
+     "label": "25日線からの押し幅(ATR)",
+     "category": "timing",
+     "z": 0.667,
+     "weight": 0.5228,
+     "contribution": 0.3489,
+     "raw": 0.4571
+    },
+    {
+     "factor": "mom_120_20",
+     "label": "中期モメンタム(120-20日)",
+     "category": "momentum",
+     "z": 0.916,
+     "weight": 0.1872,
+     "contribution": 0.1715,
+     "raw": 0.2846
+    },
+    {
+     "factor": "sma75_slope",
+     "label": "75日線の傾き",
+     "category": "trend",
+     "z": 0.775,
+     "weight": 0.0842,
+     "contribution": 0.0653,
+     "raw": 0.0028
+    },
+    {
+     "factor": "percent_b",
+     "label": "ボリンジャー%B",
+     "category": "timing",
+     "z": 0.623,
+     "weight": 0.0987,
+     "contribution": 0.0615,
+     "raw": 0.3884
+    },
+    {
+     "factor": "vol_ratio25",
+     "label": "出来高比(25日平均比)",
+     "category": "volume",
+     "z": -0.408,
+     "weight": 0.1071,
+     "contribution": -0.0436,
+     "raw": 0.7285
+    }
+   ]
+  },
+  {
+   "rank": 24,
+   "code": "218A",
+   "name": "Ｌｉｂｅｒａｗａｒｅ",
+   "sector33": "精密機器",
+   "score": 0.5947923745284759,
+   "ev_r": -0.005203322519260295,
+   "ev_yen": -0.0,
+   "est_win_rate": 0.4188282734287154,
+   "bucket": 8,
+   "close": 15269.873230527804,
+   "entry_ref": 15269.873230527804,
+   "stop": 14521.616194562506,
+   "target": 16766.387302458403,
+   "stop_pct": 0.049002177337619905,
+   "target_pct": 0.09800435467523981,
+   "reward_risk": 2.0,
+   "atr14": 498.83802397686566,
+   "atr_pct": 0.03266811822507994,
+   "turnover_ma25": 9290980752.56157,
+   "shares": 0,
+   "cost_yen": 0.0,
+   "position_risk_yen": 0.0,
+   "sizing_note": "min_lot_exceeds_risk",
+   "contributions": [
+    {
+     "factor": "pullback_atr",
+     "label": "25日線からの押し幅(ATR)",
+     "category": "timing",
+     "z": 0.667,
+     "weight": 0.5228,
+     "contribution": 0.3489,
+     "raw": 0.2235
+    },
+    {
+     "factor": "sma75_slope",
+     "label": "75日線の傾き",
+     "category": "trend",
+     "z": 1.196,
+     "weight": 0.0842,
+     "contribution": 0.1007,
+     "raw": 0.0035
+    },
+    {
+     "factor": "mom_120_20",
+     "label": "中期モメンタム(120-20日)",
+     "category": "momentum",
+     "z": 0.473,
+     "weight": 0.1872,
+     "contribution": 0.0885,
+     "raw": 0.2012
+    },
+    {
+     "factor": "percent_b",
+     "label": "ボリンジャー%B",
+     "category": "timing",
+     "z": 0.623,
+     "weight": 0.0987,
+     "contribution": 0.0615,
+     "raw": 0.4498
+    },
+    {
+     "factor": "vol_ratio25",
+     "label": "出来高比(25日平均比)",
+     "category": "volume",
+     "z": -0.045,
+     "weight": 0.1071,
+     "contribution": -0.0048,
+     "raw": 0.8796
+    }
+   ]
+  },
+  {
+   "rank": 25,
+   "code": "1446",
+   "name": "キャンディル",
+   "sector33": "建設業",
+   "score": 0.5838099237709342,
+   "ev_r": -0.0056236293103346,
+   "ev_yen": -104.46314660382393,
+   "est_win_rate": 0.4188282734287154,
+   "bucket": 8,
+   "close": 4024.095047528826,
+   "entry_ref": 4024.095047528826,
+   "stop": 3838.337521847233,
+   "target": 4395.6100988920125,
+   "stop_pct": 0.04616131664078506,
+   "target_pct": 0.09232263328157012,
+   "reward_risk": 2.0,
+   "atr14": 123.83835045439542,
+   "atr_pct": 0.030774211093856706,
+   "turnover_ma25": 790637430.9153955,
+   "shares": 100,
+   "cost_yen": 402409.5047528826,
+   "position_risk_yen": 18575.752568159314,
+   "sizing_note": "risk",
+   "contributions": [
+    {
+     "factor": "pullback_atr",
+     "label": "25日線からの押し幅(ATR)",
+     "category": "timing",
+     "z": 0.667,
+     "weight": 0.5228,
+     "contribution": 0.3489,
+     "raw": 0.2367
+    },
+    {
+     "factor": "mom_120_20",
+     "label": "中期モメンタム(120-20日)",
+     "category": "momentum",
+     "z": 1.09,
+     "weight": 0.1872,
+     "contribution": 0.2042,
+     "raw": 0.3173
+    },
+    {
+     "factor": "vol_ratio25",
+     "label": "出来高比(25日平均比)",
+     "category": "volume",
+     "z": -0.77,
+     "weight": 0.1071,
+     "contribution": -0.0825,
+     "raw": 0.5775
+    },
+    {
+     "factor": "percent_b",
+     "label": "ボリンジャー%B",
+     "category": "timing",
+     "z": 0.623,
+     "weight": 0.0987,
+     "contribution": 0.0615,
+     "raw": 0.4414
+    },
+    {
+     "factor": "sma75_slope",
+     "label": "75日線の傾き",
+     "category": "trend",
+     "z": 0.614,
+     "weight": 0.0842,
+     "contribution": 0.0517,
+     "raw": 0.0025
+    }
+   ]
+  }
+ ]
+}

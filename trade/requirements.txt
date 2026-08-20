@@ -1,0 +1,6 @@
+pandas>=2.0
+numpy>=1.24
+pyarrow>=12.0        # Parquet cache; the store falls back to gzip CSV without it
+yfinance>=0.2.40     # primary price provider
+xlrd>=2.0            # reading the JPX .xls issue list
+pytest>=7.0          # tests only

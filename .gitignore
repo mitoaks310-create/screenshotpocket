@@ -1,0 +1,6 @@
+.venv/
+__pycache__/
+*.pyc
+trade/data/cache/
+trade/data/models/
+.pytest_cache/

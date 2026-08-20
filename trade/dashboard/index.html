@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>日本株スイングトレード スクリーナー</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%232b5fd9'/%3E%3Cpath d='M3 11.5l3-3 2.5 2L13 5' stroke='%23fff' stroke-width='1.8' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="title-row">
+      <h1>日本株スイングトレード スクリーナー</h1>
+      <span id="provider-badge" class="badge">—</span>
+    </div>
+    <div class="subtitle" id="subtitle">読み込み中…</div>
+  </header>
+
+  <div id="demo-banner" class="banner hidden">
+    <strong>デモデータ表示中。</strong>
+    これは合成された架空の株価であり、実在する銘柄の値動きではありません。
+    実データで動かすには <code class="inline">python -m screener.cli run --provider yfinance</code> を実行してください。
+  </div>
+
+  <div id="edge-banner" class="banner hidden"></div>
+
+  <nav class="tabs" role="tablist">
+    <button role="tab" aria-selected="true"  data-tab="screen">候補銘柄</button>
+    <button role="tab" aria-selected="false" data-tab="validation">検証結果</button>
+    <button role="tab" aria-selected="false" data-tab="factors">ファクター定義</button>
+  </nav>
+
+  <!-- ================================================== screening tab -->
+  <section class="tab-panel" id="tab-screen">
+
+    <div class="card">
+      <h2>相場環境<span class="hint">買い戦略が機能しやすい地合いかどうか</span></h2>
+      <div class="stat-grid" id="regime-stats"></div>
+    </div>
+
+    <div class="card">
+      <h2>ポジションサイズ設定<span class="hint">数値を変えると下の表が即座に再計算されます</span></h2>
+      <div class="controls">
+        <div class="field">
+          <label for="equity">運用資金（円）</label>
+          <input id="equity" type="number" min="100000" step="100000" value="3000000">
+        </div>
+        <div class="field">
+          <label for="risk">1トレードのリスク（%）</label>
+          <input id="risk" type="number" min="0.1" max="10" step="0.1" value="1.0">
+        </div>
+        <div class="field">
+          <label for="maxpos">1銘柄の上限（%）</label>
+          <input id="maxpos" type="number" min="1" max="100" step="1" value="25">
+        </div>
+        <div class="field">
+          <span class="note" id="risk-note"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>スコア上位<span class="hint">行をクリックするとチャートとスコア内訳が開きます</span></h2>
+      <div class="table-scroll">
+        <table id="screen-table">
+          <thead><tr id="screen-head"></tr></thead>
+          <tbody id="screen-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================================================= validation tab -->
+  <section class="tab-panel" id="tab-validation" hidden>
+
+    <div class="card">
+      <h2>ウォークフォワード検証<span class="hint">学習期間より後のデータのみで測定</span></h2>
+      <div class="stat-grid" id="validation-stats"></div>
+    </div>
+
+    <div class="card">
+      <h2>スコア別の実現期待値<span class="hint">学習に使っていない期間での1トレードあたり平均R。破線がゼロ、上が利益</span></h2>
+      <div class="decile-chart" id="decile-chart"></div>
+      <div class="decile-labels" id="decile-labels"></div>
+      <div class="chart-note">左がスコア下位、右が上位。左から右へ右肩上がりなら、スコアが機能しています。</div>
+      <div class="table-scroll" style="margin-top:16px">
+        <table id="decile-table"></table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>資産曲線<span class="hint">検証期間で上位銘柄を機械的に売買した場合</span></h2>
+      <div id="equity-chart"></div>
+      <div class="chart-note" id="equity-note"></div>
+    </div>
+
+    <div class="card">
+      <h2>ファクター有効性（IC）<span class="hint">全期間でのスピアマン順位相関の平均</span></h2>
+      <div class="table-scroll"><table id="ic-table"></table></div>
+    </div>
+
+    <div class="card">
+      <h2>分割の内訳</h2>
+      <div class="table-scroll"><table id="fold-table"></table></div>
+    </div>
+  </section>
+
+  <!-- ==================================================== factors tab -->
+  <section class="tab-panel" id="tab-factors" hidden>
+    <div class="card">
+      <h2>トレードプラン<span class="hint">期待値はこの売買ルールを前提に測定されています</span></h2>
+      <div class="stat-grid" id="plan-stats"></div>
+    </div>
+    <div class="card">
+      <h2>抽出条件（ハードフィルタ）<span class="hint">満たさない銘柄はスコアリング以前に除外</span></h2>
+      <div class="stat-grid" id="filter-stats"></div>
+    </div>
+    <div class="card">
+      <h2>ファクター一覧<span class="hint">重みはICから決定。0の項目は今回ノイズと判定され不採用</span></h2>
+      <div class="factor-grid" id="factor-grid"></div>
+    </div>
+  </section>
+
+  <div id="fatal" class="error" style="display:none"></div>
+
+  <footer>
+    このページは <code class="inline">python -m screener.cli screen</code> が出力した JSON を表示しています。
+    投資判断は自己責任で行ってください。
+  </footer>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
