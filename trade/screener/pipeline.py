@@ -7,7 +7,7 @@ or a scheduled job without going through argument parsing.
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 
@@ -36,6 +36,9 @@ class Dataset:
     z_panel: pd.DataFrame
     universe: pd.DataFrame
     provider: str
+    #: Codes dropped by the data quality gate, and the issues that caused it.
+    quarantined: list[str] = field(default_factory=list)
+    quality_issues: pd.DataFrame = field(default_factory=pd.DataFrame)
 
     @property
     def as_of(self) -> pd.Timestamp | None:
@@ -81,8 +84,16 @@ def build_dataset(
     config: Config = DEFAULT_CONFIG,
     store: PriceStore | None = None,
     limit: int | None = None,
+    quality_gate: bool = True,
 ) -> Dataset:
-    """Load the cache and compute factors, labels and z-scores."""
+    """Load the cache and compute factors, labels and z-scores.
+
+    ``quality_gate`` drops issues carrying an ``error``-level data problem
+    before anything is computed from them.  A stock with an unadjusted split
+    does not merely score badly — the artefact looks like an enormous move, so
+    it tends to score *well*, which is the worst possible failure mode for a
+    ranking system.
+    """
     store = store or PriceStore()
     universe = load_universe(markets=config.filters.markets, sizes=config.filters.sizes)
     if limit:
@@ -97,6 +108,19 @@ def build_dataset(
         )
     panel = panel[panel["code"].isin(codes)].reset_index(drop=True)
 
+    quarantined: list[str] = []
+    quality_issues = pd.DataFrame()
+    if quality_gate:
+        from .quality import check_panel, quarantine
+
+        quality_issues = check_panel(panel)
+        panel, quarantined = quarantine(panel, quality_issues)
+        if panel.empty:
+            raise RuntimeError(
+                "every code was quarantined by the data quality gate — "
+                "run `python -m screener.cli quality` to see why."
+            )
+
     sectors = dict(zip(universe["code"], universe["sector33"]))
     factor_panel = compute_factor_panel(panel, config=config, sectors=sectors)
     trades = simulate_panel(panel, config=config)
@@ -109,6 +133,8 @@ def build_dataset(
         z_panel=z_panel,
         universe=universe,
         provider=provider_name,
+        quarantined=quarantined,
+        quality_issues=quality_issues,
     )
 
 

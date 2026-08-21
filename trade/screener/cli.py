@@ -24,6 +24,8 @@ from .export import write_all
 from .pipeline import build_dataset, load_model, save_model, train, update_prices
 from .screen import Account, market_regime, run_screen
 from .store import PriceStore
+from .calendar import refresh_holidays, validate_against_jpx
+from .quality import check_panel, quarantine, reconcile, summarise as quality_summary
 from .delisted import DELISTED_CSV, load_delisted, refresh_delisted, summarise as delisted_summary
 from .universe import load_universe, refresh_universe
 
@@ -107,6 +109,76 @@ def cmd_update(args) -> int:
     return 0
 
 
+def cmd_quality(args) -> int:
+    """Audit the cached bars. Free data is fine — if you verify it."""
+    store = PriceStore()
+    panel = store.load()
+    if panel.empty:
+        print("price cache is empty — run `update` first", file=sys.stderr)
+        return 1
+    if args.limit:
+        keep = sorted(panel["code"].unique())[: args.limit]
+        panel = panel[panel["code"].isin(keep)]
+
+    issues = check_panel(panel)
+    stats = quality_summary(issues, panel)
+    print(f"panel: {stats['bars']:,} bars, {stats['codes']:,} codes, "
+          f"{stats['date_range'][0]} … {stats['date_range'][1]}")
+
+    if issues.empty:
+        print("\nno data quality issues found")
+        return 0
+
+    print(f"\n{stats['issues']} issues across {len(issues['code'].unique())} codes")
+    for sev in ("error", "warning", "info"):
+        n = stats["by_severity"].get(sev, 0)
+        if n:
+            print(f"  {sev:<8} {n:>5}")
+    print("\nby check:")
+    for check, n in sorted(stats["by_check"].items(), key=lambda kv: -kv[1]):
+        print(f"  {check:<24} {n:>5}")
+
+    shown = issues if args.all else issues[issues["severity"] == "error"]
+    if not shown.empty:
+        print(f"\n{'code':<6} {'date':<12} {'check':<24} {'severity':<8} detail")
+        for r in shown.head(args.show).itertuples():
+            date = "" if pd.isna(r.date) else str(pd.Timestamp(r.date).date())
+            print(f"{r.code:<6} {date:<12} {r.check:<24} {r.severity:<8} {r.detail}")
+        if len(shown) > args.show:
+            print(f"  … {len(shown) - args.show} more (use --show N)")
+
+    _kept, dropped = quarantine(panel, issues)
+    if dropped:
+        print(
+            f"\n{len(dropped)} codes would be quarantined by the quality gate: "
+            + ", ".join(dropped[:20]) + (" …" if len(dropped) > 20 else "")
+        )
+        print("  An unadjusted split looks like a huge move, so a corrupt name tends")
+        print("  to rank WELL. Excluding it is the only safe response.")
+
+    if args.csv:
+        issues.to_csv(args.csv, index=False)
+        print(f"\nwrote {args.csv}")
+    return 0
+
+
+def cmd_calendar(args) -> int:
+    if args.refresh:
+        h = refresh_holidays()
+        print(f"holidays refreshed: {len(h)} entries "
+              f"({h['date'].min().date()} … {h['date'].max().date()})")
+    print("\ncross-checking the derived TSE calendar against JPX's published list…")
+    result = validate_against_jpx()
+    print(f"  compared {result['checked']} weekday closures over {result.get('range')}")
+    if result["missing"]:
+        print(f"  ⚠ JPX closes these but we expect a bar: {result['missing']}")
+    if result["extra"]:
+        print(f"  ⚠ we excuse these but JPX trades them: {result['extra']}")
+    if not result["missing"] and not result["extra"]:
+        print("  ✓ exact agreement")
+    return 0
+
+
 def cmd_backtest(args) -> int:
     config = _config_from_args(args)
     dataset = build_dataset(provider_name=args.provider, config=config, limit=args.limit)
@@ -115,6 +187,7 @@ def cmd_backtest(args) -> int:
         f"{dataset.factor_panel['code'].nunique():,} codes, "
         f"{len(dataset.trades):,} simulated trades"
     )
+    _print_quality_gate(dataset)
     model, report = train(dataset, config)
     path = save_model(model, report, dataset, MODEL_DIR, config)
     _print_backtest(report, model)
@@ -139,6 +212,7 @@ def cmd_screen(args) -> int:
         return 1
 
     regime = market_regime(dataset.panel, dataset.factor_panel, config)
+    _print_quality_gate(dataset)
     _print_screen(candidates, regime, dataset, account)
 
     out_dir = Path(args.out) if args.out else DASHBOARD_DATA_DIR
@@ -203,6 +277,22 @@ def cmd_serve(args) -> int:
 
 
 # ------------------------------------------------------------------ output
+
+
+def _print_quality_gate(dataset) -> None:
+    if not getattr(dataset, "quarantined", None):
+        return
+    codes = dataset.quarantined
+    print(
+        f"\ndata quality gate: {len(codes)} codes excluded "
+        + ", ".join(codes[:12]) + (" …" if len(codes) > 12 else "")
+    )
+    issues = getattr(dataset, "quality_issues", None)
+    if issues is not None and not issues.empty:
+        errs = issues[issues["severity"] == "error"]
+        for check, n in errs["check"].value_counts().items():
+            print(f"  {check:<24} {n:>4}")
+        print("  run `python -m screener.cli quality` for the detail")
 
 
 def _print_backtest(report: dict, model) -> None:
@@ -374,6 +464,17 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--years", type=float, default=7.0)
     sp.add_argument("--rebuild", action="store_true", help="discard the cache and refetch")
     sp.set_defaults(func=cmd_update)
+
+    sp = sub.add_parser("quality", help="audit cached bars for data quality problems")
+    sp.add_argument("--limit", type=int, default=None)
+    sp.add_argument("--all", action="store_true", help="list warnings too, not just errors")
+    sp.add_argument("--show", type=int, default=25, help="max rows to print")
+    sp.add_argument("--csv", default=None, help="write the full issue list here")
+    sp.set_defaults(func=cmd_quality)
+
+    sp = sub.add_parser("calendar", help="refresh and verify the TSE trading calendar")
+    sp.add_argument("--refresh", action="store_true", help="re-download the holiday list")
+    sp.set_defaults(func=cmd_calendar)
 
     sp = sub.add_parser("backtest", help="walk-forward validate and fit the live model")
     shared(sp)

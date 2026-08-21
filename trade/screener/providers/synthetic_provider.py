@@ -138,7 +138,7 @@ class SyntheticProvider:
             ret = beta * market + sector_beta * sector + drift + eps
 
         start_price = float(np.exp(rng.uniform(np.log(320), np.log(9000))))
-        close = start_price * np.exp(np.cumsum(ret))
+        close = _apply_price_limits(start_price, ret)
 
         prev_close = np.concatenate([[start_price], close[:-1]])
         gap = rng.standard_normal(n) * np.sqrt(var) * 0.45
@@ -169,6 +169,29 @@ class SyntheticProvider:
                 "volume": np.maximum(np.round(volume, -2), 100.0),
             }
         )
+
+
+def _apply_price_limits(start_price: float, ret: np.ndarray) -> np.ndarray:
+    """Compound returns into a price path the TSE would actually permit.
+
+    A pure geometric walk happily produces a 40% daily move; the exchange does
+    not. Clamping each close to its daily limit — and letting the excess spill
+    into the following sessions, as it does in a real limit-up run — keeps the
+    generated bars inside the rules the rest of this package assumes. Without
+    it, the synthetic panel fails :mod:`screener.quality`'s own price-limit
+    check, which would make a clean baseline impossible to establish.
+    """
+    from ..limits import limit_width
+
+    n = len(ret)
+    close = np.empty(n)
+    prev = start_price
+    for t in range(n):
+        raw = prev * np.exp(ret[t])
+        width = float(limit_width(np.array([prev]))[0])
+        close[t] = min(max(raw, prev - width), prev + width)
+        prev = close[t]
+    return close
 
 
 def hash_code(code: str) -> int:

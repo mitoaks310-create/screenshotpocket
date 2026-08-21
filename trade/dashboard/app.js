@@ -97,6 +97,16 @@ function renderHeader() {
       "下の期待値は信頼できる推定値として扱わないでください。"
     );
   }
+  const dq = s.data_quality || {};
+  if (dq.quarantined_count > 0) {
+    const list = (dq.quarantined || []).slice(0, 15).join(", ");
+    msgs.push(
+      `<strong>データ品質ゲートで ${dq.quarantined_count} 銘柄を除外しました。</strong> ` +
+      "株式分割の未調整などは「巨大な値動き」に見えるため、壊れた銘柄はむしろ上位に " +
+      "来やすく、除外が唯一の安全な対処です。対象: " + escapeHtml(list) +
+      (dq.quarantined_count > 15 ? " …" : "")
+    );
+  }
   if (isFinite(best) && best <= 0) {
     msgs.push(
       `<strong>本日は期待値がプラスの候補がありません（最高 ${signed(best)}R）。</strong> ` +

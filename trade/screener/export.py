@@ -89,6 +89,7 @@ def screen_payload(
         "universe_size": int(dataset.factor_panel["code"].nunique())
         if not dataset.factor_panel.empty
         else 0,
+        "data_quality": _quality_block(dataset),
         "regime": _json_safe(regime),
         "account": {
             "equity_yen": account.equity_yen,
@@ -124,6 +125,20 @@ def screen_payload(
         ],
         "candidates": rows,
     }
+
+
+def _quality_block(dataset) -> dict:
+    """What the quality gate removed, so the dashboard can say so out loud."""
+    from .quality import summarise as quality_summary
+
+    issues = getattr(dataset, "quality_issues", None)
+    quarantined = list(getattr(dataset, "quarantined", []) or [])
+    block: dict = {"quarantined": quarantined, "quarantined_count": len(quarantined)}
+    if issues is not None and not issues.empty:
+        stats = quality_summary(issues, dataset.panel)
+        block["by_severity"] = stats.get("by_severity", {})
+        block["by_check"] = stats.get("by_check", {})
+    return block
 
 
 def backtest_payload(report: dict, model: ScoringModel, config: Config) -> dict:
