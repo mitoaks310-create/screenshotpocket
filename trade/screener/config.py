@@ -49,6 +49,10 @@ class TradePlan:
     #: Round-trip cost (commission + spread + slippage) as a fraction of the
     #: entry price.  0.15% is a realistic retail figure for liquid JP equities.
     cost_pct: float = 0.0015
+    #: Honour TSE daily price limits: skip signals whose entry bar was locked
+    #: limit-up (no fill was available), and defer a stop that fell on a bar
+    #: locked limit-down.  Turning this off overstates results.
+    respect_price_limits: bool = True
 
     @property
     def reward_risk(self) -> float:
@@ -97,6 +101,17 @@ class ScoringConfig:
     ic_shrink: float = 0.005
     #: Floor on the number of names scored on a given date.
     min_cross_section: int = 30
+    #: Require a factor's overlap-corrected IC t-statistic to clear a
+    #: multiple-testing threshold before it receives any weight.
+    require_significance: bool = True
+    #: Family-wise error rate used to derive that threshold.
+    alpha: float = 0.05
+    #: Explicit |t| override; ``None`` derives it via Bonferroni from the
+    #: number of factors screened.
+    min_ic_t: float | None = None
+    #: Newey-West lag count for the IC standard error.  ``None`` uses the
+    #: trade plan's holding period, which is the actual overlap length.
+    nw_lags: int | None = None
 
 
 @dataclass(frozen=True)

@@ -115,14 +115,18 @@ def test_time_exit_uses_the_close_of_the_last_held_bar():
 
 
 def test_entry_is_the_next_open_never_the_signal_close():
-    """Guards against the most damaging form of look-ahead in the system."""
+    """Guards against the most damaging form of look-ahead in the system.
+
+    The gap stays inside the TSE limit (a 100-yen stock may move +/-30), so the
+    entry is genuinely available and the assertion isolates the timing.
+    """
     bars = [flat(100.0)] * 8
     bars[0] = {"open": 100.0, "high": 100.0, "low": 100.0, "close": 100.0}
-    bars[1] = {"open": 200.0, "high": 205.0, "low": 199.0, "close": 200.0}
+    bars[1] = {"open": 120.0, "high": 125.0, "low": 119.0, "close": 120.0}
     panel, atr = build(bars)
     trades = simulate_panel(panel, config=make_config(), atr=atr)
     row = trades[trades["date"] == panel["date"].iloc[0]].iloc[0]
-    assert float(row["entry"]) == pytest.approx(200.0)
+    assert float(row["entry"]) == pytest.approx(120.0)
     assert row["entry_date"] == panel["date"].iloc[1]
 
 

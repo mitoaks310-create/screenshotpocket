@@ -24,6 +24,7 @@ Three stages, deliberately kept separate so each can be inspected on its own:
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass, field
 from typing import Iterable
 
@@ -32,6 +33,17 @@ import pandas as pd
 
 from .config import Config, DEFAULT_CONFIG
 from .factors import FACTOR_NAMES, SPEC_BY_NAME, directional_value
+
+IC_COLUMNS = [
+    "factor",
+    "ic_mean",
+    "ic_std",
+    "ic_t_naive",
+    "ic_t",
+    "ic_autocorr1",
+    "n_dates",
+    "n_trades",
+]
 
 
 def zscore_factors(
@@ -120,6 +132,7 @@ def factor_ic(
     trades: pd.DataFrame,
     factor_names: Iterable[str] = FACTOR_NAMES,
     min_names_per_date: int = 20,
+    nw_lags: int | None = None,
 ) -> pd.DataFrame:
     """Per-factor information coefficient statistics.
 
@@ -134,14 +147,14 @@ def factor_ic(
     factor_names = [n for n in factor_names if f"z_{n}" in z_panel.columns]
     if not factor_names:
         return pd.DataFrame(
-            columns=["factor", "ic_mean", "ic_std", "ic_t", "n_dates", "n_trades"]
+            columns=IC_COLUMNS
         )
     merged = z_panel.merge(
         trades[["date", "code", "r_multiple"]], on=["date", "code"], how="inner"
     )
     if merged.empty:
         return pd.DataFrame(
-            columns=["factor", "ic_mean", "ic_std", "ic_t", "n_dates", "n_trades"]
+            columns=IC_COLUMNS
         )
 
     xcols = [f"z_{n}" for n in factor_names]
@@ -153,7 +166,7 @@ def factor_ic(
     merged = merged[sizes >= min_names_per_date]
     if merged.empty:
         return pd.DataFrame(
-            columns=["factor", "ic_mean", "ic_std", "ic_t", "n_dates", "n_trades"]
+            columns=IC_COLUMNS
         )
 
     # Rank within each date, then correlate: Pearson on ranks is Spearman.
@@ -175,29 +188,126 @@ def factor_ic(
     mean = ic.mean()
     std = ic.std(ddof=1)
     with np.errstate(invalid="ignore", divide="ignore"):
-        t = mean / (std / np.sqrt(n_dates.replace(0, np.nan)))
+        t_naive = mean / (std / np.sqrt(n_dates.replace(0, np.nan)))
+
+    # Consecutive days' ICs are NOT independent: with a holding period of H
+    # bars, two ICs one day apart score outcomes that share (H-1)/H of their
+    # window.  Measured autocorrelation of the daily IC series runs 0.6-0.8,
+    # and treating the days as independent overstates t by roughly 2-3x.
+    # Newey-West with H lags corrects the standard error for that overlap.
+    lags = nw_lags if nw_lags is not None else 15
+    t_nw = {c: _newey_west_t(ic[c].dropna().to_numpy(), lags) for c in xcols}
+    ac1 = {c: _autocorr1(ic[c].dropna().to_numpy()) for c in xcols}
 
     return pd.DataFrame(
         {
             "factor": factor_names,
             "ic_mean": [float(mean.get(c, 0.0) or 0.0) for c in xcols],
             "ic_std": [float(std.get(c, 0.0) or 0.0) for c in xcols],
-            "ic_t": [float(np.nan_to_num(t.get(c, 0.0))) for c in xcols],
+            "ic_t_naive": [float(np.nan_to_num(t_naive.get(c, 0.0))) for c in xcols],
+            # ``ic_t`` stays the name the rest of the system reads, but it now
+            # carries the overlap-corrected statistic.
+            "ic_t": [float(np.nan_to_num(t_nw[c])) for c in xcols],
+            "ic_autocorr1": [float(np.nan_to_num(ac1[c])) for c in xcols],
             "n_dates": [int(n_dates.get(c, 0)) for c in xcols],
             "n_trades": int(len(merged)),
         }
     )
 
 
+def _newey_west_t(x: np.ndarray, lags: int) -> float:
+    """t-statistic for the mean of a serially correlated series.
+
+    Uses Bartlett weights, so the long-run variance stays positive
+    semi-definite however strong the autocorrelation is.
+    """
+    n = len(x)
+    if n < 3:
+        return 0.0
+    mean = float(x.mean())
+    e = x - mean
+    var = float(e @ e) / n
+    for lag in range(1, min(lags, n - 1) + 1):
+        weight = 1.0 - lag / (lags + 1.0)
+        var += 2.0 * weight * float(e[lag:] @ e[:-lag]) / n
+    if var <= 0:
+        return 0.0
+    return mean / np.sqrt(var / n)
+
+
+def _autocorr1(x: np.ndarray) -> float:
+    """Lag-1 autocorrelation — the diagnostic that motivates the correction."""
+    if len(x) < 3:
+        return 0.0
+    a, b = x[:-1], x[1:]
+    a_c, b_c = a - a.mean(), b - b.mean()
+    denom = np.sqrt((a_c @ a_c) * (b_c @ b_c))
+    return float(a_c @ b_c / denom) if denom > 0 else 0.0
+
+
+def normal_ppf(p: float) -> float:
+    """Inverse standard normal CDF by bisection on ``erfc``.
+
+    A dependency on scipy for one quantile is not worth it, and bisection over
+    40 iterations is exact to well past the precision this threshold needs.
+    """
+    if not 0.0 < p < 1.0:
+        raise ValueError("p must be in (0, 1)")
+    lo, hi = -10.0, 10.0
+    for _ in range(200):
+        mid = (lo + hi) / 2.0
+        cdf = 0.5 * math.erfc(-mid / math.sqrt(2.0))
+        if cdf < p:
+            lo = mid
+        else:
+            hi = mid
+    return (lo + hi) / 2.0
+
+
+def significance_threshold(n_tested: int, alpha: float = 0.05) -> float:
+    """Two-sided |t| a factor must clear, Bonferroni-corrected.
+
+    Sixteen factors are screened against the same outcomes, so the largest of
+    sixteen noise draws clears an uncorrected 5% bar routinely.  Correcting for
+    the family keeps the weighting from being handed to whichever factor got
+    lucky in this particular sample.
+    """
+    n_tested = max(1, int(n_tested))
+    return abs(normal_ppf(alpha / (2.0 * n_tested)))
+
+
 def weights_from_ic(ic_table: pd.DataFrame, config: Config = DEFAULT_CONFIG) -> dict[str, float]:
-    """Shrunk, non-negative, normalised weights."""
+    """Shrunk, non-negative, normalised weights, gated on significance.
+
+    Two gates, and both matter:
+
+    *Magnitude* — the IC has to beat a shrinkage floor, so a factor whose edge
+    rounds to nothing contributes nothing rather than adding variance.
+
+    *Significance* — the overlap-corrected t-statistic has to clear a
+    Bonferroni threshold for the number of factors screened.  Without this,
+    whichever of sixteen factors got luckiest in the training window collects
+    weight on the strength of that luck.  This gate is why a factor can show a
+    positive IC and still be dropped.
+    """
     if ic_table.empty:
         return {name: 1.0 / len(FACTOR_NAMES) for name in FACTOR_NAMES}
+
     raw = (ic_table["ic_mean"] - config.scoring.ic_shrink).clip(lower=0.0)
+
+    if config.scoring.require_significance and "ic_t" in ic_table.columns:
+        threshold = (
+            config.scoring.min_ic_t
+            if config.scoring.min_ic_t is not None
+            else significance_threshold(len(ic_table), config.scoring.alpha)
+        )
+        raw = raw.where(ic_table["ic_t"].fillna(0.0) >= threshold, 0.0)
+
     total = float(raw.sum())
     if total <= 0:
-        # No factor cleared the noise floor.  Fall back to equal weights rather
-        # than returning an all-zero model that scores every stock identically.
+        # Nothing cleared the bar.  Equal weights are a poor model, but an
+        # all-zero one scores every stock identically and hides the failure;
+        # the backtest's monotonicity check is what surfaces it.
         return {name: 1.0 / len(ic_table) for name in ic_table["factor"]}
     return {
         str(row.factor): float(w / total)
@@ -348,7 +458,12 @@ def fit_model(
     config: Config = DEFAULT_CONFIG,
 ) -> ScoringModel:
     """Fit weights and the EV calibration on one training window."""
-    ic_table = factor_ic(z_panel, trades)
+    # The overlap that inflates the naive t-statistic is exactly the holding
+    # period, so that is the lag count the standard error has to span.
+    lags = config.scoring.nw_lags
+    if lags is None:
+        lags = config.trade.max_hold_bars
+    ic_table = factor_ic(z_panel, trades, nw_lags=lags)
     weights = weights_from_ic(ic_table, config)
 
     merged = z_panel.merge(

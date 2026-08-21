@@ -24,6 +24,7 @@ from .export import write_all
 from .pipeline import build_dataset, load_model, save_model, train, update_prices
 from .screen import Account, market_regime, run_screen
 from .store import PriceStore
+from .delisted import DELISTED_CSV, load_delisted, refresh_delisted, summarise as delisted_summary
 from .universe import load_universe, refresh_universe
 
 
@@ -52,6 +53,28 @@ def cmd_universe(args) -> int:
     print(f"{len(df)} issues")
     print(df["market"].value_counts().to_string())
     print(df["size"].value_counts().to_string())
+    return 0
+
+
+def cmd_delisted(args) -> int:
+    if args.refresh:
+        df = refresh_delisted()
+        print(f"scraped {len(df)} delistings -> {DELISTED_CSV}")
+    else:
+        df = load_delisted()
+        if df.empty:
+            print("no delisting data — run with --refresh", file=sys.stderr)
+            return 1
+    print(f"{len(df)} delistings, {df['delist_date'].min().date()} … {df['delist_date'].max().date()}")
+    stats = delisted_summary(df, args.since, None)
+    print(f"\nsince {args.since}: {stats['total']} delistings")
+    for k, v in sorted(stats.get("by_category", {}).items(), key=lambda kv: -kv[1]):
+        print(f"  {k:<12} {v:>5}  ({v/stats['total']:>5.1%})")
+    print(
+        "\nJapanese delistings are dominated by M&A rather than failure, so the\n"
+        "usual 'survivorship bias inflates backtests' rule does not transfer:\n"
+        "the missing names mostly left at a takeover premium."
+    )
     return 0
 
 
@@ -230,12 +253,28 @@ def _print_backtest(report: dict, model) -> None:
     print("\n=== factor information coefficients (full history) ===")
     ic = model.ic_table
     if not ic.empty:
+        from .scoring import significance_threshold
+
         merged = ic.copy()
         merged["weight"] = merged["factor"].map(model.weights).fillna(0.0)
         merged = merged.sort_values("weight", ascending=False)
-        print(f"{'factor':<22} {'IC':>8} {'t':>8} {'weight':>8}")
+        threshold = significance_threshold(len(ic))
+        print(
+            "  't naive' assumes each day's IC is independent. It is not: with a\n"
+            "  15-bar hold, consecutive days score overlapping outcomes, so 't NW'\n"
+            "  (Newey-West) is the honest figure. 'ac1' is the daily autocorrelation\n"
+            f"  that drives the gap. A factor needs |t NW| >= {threshold:.2f} to earn\n"
+            "  weight — Bonferroni-corrected for screening all of them at once.\n"
+        )
+        print(f"{'factor':<22} {'IC':>8} {'t naive':>8} {'t NW':>7} {'ac1':>6} {'weight':>8}")
         for r in merged.itertuples():
-            print(f"{r.factor:<22} {r.ic_mean:>+8.4f} {r.ic_t:>+8.2f} {r.weight:>8.3f}")
+            naive = getattr(r, "ic_t_naive", float("nan"))
+            ac1 = getattr(r, "ic_autocorr1", float("nan"))
+            mark = "" if r.weight > 0 else "  ·"
+            print(
+                f"{r.factor:<22} {r.ic_mean:>+8.4f} {naive:>+8.2f} {r.ic_t:>+7.2f} "
+                f"{ac1:>6.2f} {r.weight:>8.3f}{mark}"
+            )
 
 
 def _print_screen(candidates: pd.DataFrame, regime: dict, dataset, account: Account) -> None:
@@ -313,7 +352,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     def shared(sp, *, provider_default="yfinance"):
         sp.add_argument("--provider", default=provider_default,
-                        choices=["yfinance", "stooq", "synthetic"])
+                        choices=["jquants", "yfinance", "stooq", "synthetic"])
         sp.add_argument("--limit", type=int, default=None,
                         help="only use the first N issues (faster trial runs)")
         sp.add_argument("--min-turnover", type=float, default=None,
@@ -324,6 +363,11 @@ def build_parser() -> argparse.ArgumentParser:
     sp = sub.add_parser("universe", help="inspect or refresh the JPX issue list")
     sp.add_argument("--refresh", action="store_true", help="re-download from JPX")
     sp.set_defaults(func=cmd_universe)
+
+    sp = sub.add_parser("delisted", help="scrape/inspect the JPX delisting list")
+    sp.add_argument("--refresh", action="store_true", help="re-scrape from JPX")
+    sp.add_argument("--since", default="2019-08-01", help="summarise delistings from this date")
+    sp.set_defaults(func=cmd_delisted)
 
     sp = sub.add_parser("update", help="fetch price bars into the local cache")
     shared(sp)

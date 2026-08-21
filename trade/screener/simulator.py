@@ -31,6 +31,7 @@ import numpy as np
 import pandas as pd
 
 from .config import Config, DEFAULT_CONFIG
+from .limits import limit_width, locked_limit_down, locked_limit_up
 
 EXIT_STOP, EXIT_TARGET, EXIT_TIME = 0, 1, 2
 EXIT_LABELS = {EXIT_STOP: "stop", EXIT_TARGET: "target", EXIT_TIME: "time"}
@@ -103,6 +104,19 @@ def _simulate_block(
         stop = entry - risk
         target = entry + plan.target_atr_mult * atr
 
+    # Daily limit prices are set off the previous close, so the entry bar's
+    # limits key off the bar before it.
+    prev_close_at_entry = _shift_back(c, delay - 1)
+    width = limit_width(prev_close_at_entry)
+    upper_at_entry = prev_close_at_entry + width
+    entry_high = _shift_back(h, delay)
+    entry_low = _shift_back(l, delay)
+    unfillable = (
+        locked_limit_up(entry, entry_high, entry_low, upper_at_entry)
+        if plan.respect_price_limits
+        else np.zeros_like(entry, dtype=bool)
+    )
+
     # Bars the position is exposed to: the entry bar itself through the last
     # bar of the holding window.
     offsets = np.arange(delay, delay + hold)
@@ -133,6 +147,21 @@ def _simulate_block(
     stop_fill = np.minimum(stop, exit_open)
     target_fill = np.maximum(target, exit_open)
 
+    if plan.respect_price_limits:
+        # A bar locked limit-down offers no exit at all: the holder is stuck
+        # and sells into the next session instead. Ignoring this books a clean
+        # -1R on precisely the days when the loss was worst.
+        prev_closes = np.stack([_shift_back(c, k - 1) for k in offsets])
+        lower_bounds = prev_closes - limit_width(prev_closes)
+        locked_down = locked_limit_down(opens, highs, lows, lower_bounds)
+
+        exit_locked = locked_down[idx, rows, cols]
+        next_idx = np.clip(idx + 1, 0, hold - 1)
+        next_open = opens[next_idx, rows, cols]
+        # Only defer when a later bar actually exists to sell into.
+        can_defer = exit_locked & (idx + 1 <= hold - 1) & np.isfinite(next_open)
+        stop_fill = np.where(can_defer, np.minimum(stop_fill, next_open), stop_fill)
+
     exit_price = np.where(
         timed_out,
         exit_close,
@@ -153,6 +182,11 @@ def _simulate_block(
         & np.isfinite(atr)
         & (risk > 0)
         & (entry > 0)
+        # A signal whose entry bar was locked limit-up never became a trade.
+        # Dropping it is not the same as dropping a losing trade: there was no
+        # position to lose on, and keeping it would credit the strategy with a
+        # fill nobody could get.
+        & ~unfillable
     )
     # Drop trades whose holding window runs past the end of the data: the
     # window is complete only if a resolution happened, or the final bar exists.
